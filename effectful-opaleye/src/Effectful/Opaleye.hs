@@ -3,6 +3,7 @@
 module Effectful.Opaleye
   ( Opaleye (..)
   , runSelect
+  , runSelectI
   , runSelectExplicit
   , runInsert
   , runDelete
@@ -19,6 +20,7 @@ import Effectful.Dispatch.Dynamic
 import qualified Effectful.PostgreSQL.Connection as Conn
 import Effectful.TH
 import qualified Opaleye as O
+import qualified Opaleye.Internal.Inferrable as O
 
 data Opaleye :: Effect where
   RunSelectExplicit :: O.FromFields fields haskells -> O.Select fields -> Opaleye m [haskells]
@@ -33,6 +35,12 @@ runSelect ::
   O.Select fields ->
   Eff es [haskells]
 runSelect = runSelectExplicit def
+
+runSelectI ::
+  (HasCallStack, Opaleye :> es, Default (O.Inferrable O.FromFields) fields haskells) =>
+  O.Select fields ->
+  Eff es [haskells]
+runSelectI = runSelectExplicit (O.runInferrable def)
 
 runOpaleyeWithConnection ::
   (HasCallStack, Conn.WithConnection :> es, IOE :> es) =>
