@@ -1,8 +1,10 @@
 cabal-version:      3.0
 name:               effectful-postgresql
 version:            0.1.0.0
--- synopsis:
--- description:
+synopsis:
+  effectful support for mid-level PostgreSQL operations.
+description:
+  See the README for an overview, or the documentation in 'Effectful.PostgreSQL'.
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Frederick Pringle
@@ -10,6 +12,7 @@ maintainer:         freddyjepringle@gmail.com
 copyright:          Copyright(c) Frederick Pringle 2025
 homepage:           https://github.com/fpringle/effectful-postgresql
 build-type:         Simple
+category:           Database
 extra-doc-files:    README.md
 
 tested-with:
@@ -40,14 +43,14 @@ common warnings
 
 common deps
   build-depends:
-    , base >= 4
-    , effectful-core
-    , effectful-th
-    , postgresql-simple
+    , base >= 4 && < 5
+    , effectful-core >= 2.3 && < 2.6
+    , effectful-th >= 1.0.0.1 && < 1.0.1
+    , postgresql-simple >= 0.7 && < 0.8
 
   if flag(enable-pool)
     build-depends:
-      , unliftio-pool
+      , unliftio-pool >= 0.4.1 && < 0.5
 
 common extensions
   default-extensions:
