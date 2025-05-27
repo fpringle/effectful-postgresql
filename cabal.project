@@ -1,0 +1,8 @@
+packages:
+    effectful-postgresql/
+
+-- only build documentation on demand.
+documentation: False
+
+package *
+  documentation: False
