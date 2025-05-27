@@ -2,7 +2,7 @@
 
 This package provides an `effectful` effect for [Opaleye](https://hackage.haskell.org/package/opaleye) operations.
 
-It combines the very safe, high-level syntax of Opaleye, with the `WithConnection` abstraction of [effectful-postgresql](../effectful-postgresql#readme).
+It combines the very safe, high-level syntax of Opaleye, with the `WithConnection` abstraction of [effectful-postgresql](https://github.com/fpringle/effectful-postgresql/blob/main/effectful-postgresql#readme).
 
 ## Effectful functions
 
@@ -30,7 +30,7 @@ insertAndList = do
 
 ## Interpreters
 
-To run the `Opaleye` effect we can use the `WithConnection` effect from [effectful-postgresql](../effectful-postgresql#readme):
+To run the `Opaleye` effect we can use the `WithConnection` effect from [effectful-postgresql](https://github.com/fpringle/effectful-postgresql/blob/main/effectful-postgresql#readme):
 
 ```haskell
 import Effectful.PostgreSQL as EP
@@ -40,7 +40,7 @@ doOpaleyeStuff :: (WithConnection :> es) => Eff es [User]
 doOpaleyeStuff = EO.runOpaleyeWithConnection insertAndList
 ```
 
-The `WithConnection` effect can then be dispatched using one of its [interpreters](../effectful-postgresql#interpreters).
+The `WithConnection` effect can then be dispatched using one of its [interpreters](https://github.com/fpringle/effectful-postgresql/blob/main/effectful-postgresql#interpreters).
 Or, to skip that entirely, we can just use `runOpaleyeConnection`:
 
 ```haskell

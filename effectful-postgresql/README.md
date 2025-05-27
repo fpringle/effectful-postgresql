@@ -4,7 +4,7 @@ This package provides an `effectful` effect for [postgresql-simple](https://hack
 
 It defines a dynamic effect to allow effectful functions to use a `Connection`, without worrying about where that `Connection` comes from.
 
-For a higher-level effect library using [Opaleye](https://hackage.haskell.org/package/opaleye), see [effectful-opaleye](../effectful-opaleye#readme).
+For a higher-level effect library using [Opaleye](https://hackage.haskell.org/package/opaleye), see [effectful-opaleye](https://github.com/fpringle/effectful-postgresql/blob/main/effectful-opaleye#readme).
 
 ## Effectful functions
 
