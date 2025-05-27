@@ -1,5 +1,17 @@
-# Revision history for effectful-postgresql
+# Changelog
 
-## 0.1.0.0 -- 2025-5-25
+All notable changes to `effectful-postgresql` will be documented in this file.
 
-* First version. Released on an unsuspecting world.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Haskell Package Versioning Policy](https://pvp.haskell.org).
+
+## [Unreleased]
+
+### Added
+
+- First edition of the package, ready for feedback.
+- 100% documentation coverage.
+- TODO: Reasonably detailed README.
+- CI that builds and tests the package for each version of GHC in the `tested-with` field.
+
+[unreleased]: https://github.com/fpringle/servant-routes/compare/ca41f2e...HEAD
