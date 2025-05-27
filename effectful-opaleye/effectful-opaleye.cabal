@@ -36,6 +36,7 @@ common deps
     , opaleye
     , product-profunctors
     , effectful-postgresql
+    , postgresql-simple
 
 common extensions
   default-extensions:

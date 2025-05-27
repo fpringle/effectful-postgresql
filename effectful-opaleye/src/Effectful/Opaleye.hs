@@ -7,10 +7,12 @@ module Effectful.Opaleye
   , runDelete
   , runUpdate
   , runOpaleyeWithConnection
+  , runOpaleyeConnection
   )
 where
 
 import Data.Profunctor.Product.Default
+import qualified Database.PostgreSQL.Simple as PSQL
 import Effectful
 import Effectful.Dispatch.Dynamic
 import qualified Effectful.PostgreSQL.Connection as Conn
@@ -34,3 +36,14 @@ runOpaleyeWithConnection = interpret $ \_ -> \case
   RunInsert sel -> Conn.withConnection $ \conn -> liftIO $ O.runInsert conn sel
   RunDelete sel -> Conn.withConnection $ \conn -> liftIO $ O.runDelete conn sel
   RunUpdate sel -> Conn.withConnection $ \conn -> liftIO $ O.runUpdate conn sel
+
+runOpaleyeConnection ::
+  (HasCallStack, IOE :> es) =>
+  PSQL.Connection ->
+  Eff (Opaleye : es) a ->
+  Eff es a
+runOpaleyeConnection conn = interpret $ \_ -> \case
+  RunSelect sel -> liftIO $ O.runSelect conn sel
+  RunInsert sel -> liftIO $ O.runInsert conn sel
+  RunDelete sel -> liftIO $ O.runDelete conn sel
+  RunUpdate sel -> liftIO $ O.runUpdate conn sel
