@@ -1,15 +1,30 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Effectful.Opaleye
-  ( Opaleye (..)
+  ( -- * Effect
+    Opaleye (..)
+
+    -- * Effectful functions
+
+    -- ** Select
   , runSelect
   , runSelectI
   , runSelectExplicit
+
+    -- ** Select-fold
   , runSelectFold
   , runSelectFoldExplicit
+
+    -- ** Insert
   , runInsert
+
+    -- ** Delete
   , runDelete
+
+    -- ** Update
   , runUpdate
+
+    -- * Interpreters
   , runOpaleyeWithConnection
   , runOpaleyeConnection
   )
