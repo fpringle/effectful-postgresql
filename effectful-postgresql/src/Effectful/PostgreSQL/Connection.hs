@@ -42,6 +42,10 @@ runWithConnection conn = interpret $ \env -> \case
   WithConnection f ->
     localSeqUnlift env $ \unlift -> unlift $ f conn
 
+{- | Run a t'WithConnection' effect using a 'PSQL.ConnectInfo'.
+
+'PSQL.withConnect' will handle opening and closing the 'Connection'.
+-}
 runWithConnectInfo ::
   (HasCallStack, IOE :> es) => PSQL.ConnectInfo -> Eff (WithConnection : es) a -> Eff es a
 runWithConnectInfo connInfo eff =
