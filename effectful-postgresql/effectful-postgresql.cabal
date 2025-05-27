@@ -8,7 +8,7 @@ description:
 license:            BSD-3-Clause
 license-file:       LICENSE
 author:             Frederick Pringle
-maintainer:         freddyjepringle@gmail.com
+maintainer:         frederick.pringle@fpringle.com
 copyright:          Copyright(c) Frederick Pringle 2025
 homepage:           https://github.com/fpringle/effectful-postgresql
 build-type:         Simple
