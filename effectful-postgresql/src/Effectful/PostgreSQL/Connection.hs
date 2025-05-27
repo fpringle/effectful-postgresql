@@ -7,6 +7,7 @@ module Effectful.PostgreSQL.Connection
 
     -- * Interpret with a single Connection
   , runWithConnection
+  , runWithConnectInfo
   )
 where
 
@@ -40,3 +41,10 @@ runWithConnection ::
 runWithConnection conn = interpret $ \env -> \case
   WithConnection f ->
     localSeqUnlift env $ \unlift -> unlift $ f conn
+
+runWithConnectInfo ::
+  (HasCallStack, IOE :> es) => PSQL.ConnectInfo -> Eff (WithConnection : es) a -> Eff es a
+runWithConnectInfo connInfo eff =
+  withRunInIO $ \unlift ->
+    liftIO . PSQL.withConnect connInfo $ \conn ->
+      unlift $ runWithConnection conn eff
