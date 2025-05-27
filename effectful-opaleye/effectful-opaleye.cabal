@@ -10,7 +10,7 @@ maintainer:         freddyjepringle@gmail.com
 copyright:          Copyright(c) Frederick Pringle 2025
 homepage:           https://github.com/fpringle/effectful-postgresql
 build-type:         Simple
--- extra-doc-files:    CHANGELOG.md
+extra-doc-files:    README.md
 
 tested-with:
     GHC == 8.8.4
