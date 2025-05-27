@@ -1,5 +1,6 @@
 packages:
     effectful-postgresql/
+    effectful-opaleye/
 
 -- only build documentation on demand.
 documentation: False
