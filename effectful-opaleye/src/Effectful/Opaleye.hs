@@ -3,6 +3,7 @@
 module Effectful.Opaleye
   ( Opaleye (..)
   , runSelect
+  , runSelectExplicit
   , runInsert
   , runDelete
   , runUpdate
@@ -20,19 +21,25 @@ import Effectful.TH
 import qualified Opaleye as O
 
 data Opaleye :: Effect where
-  RunSelect :: (Default O.FromFields fields haskells) => O.Select fields -> Opaleye m [haskells]
+  RunSelectExplicit :: O.FromFields fields haskells -> O.Select fields -> Opaleye m [haskells]
   RunInsert :: O.Insert haskells -> Opaleye m haskells
   RunDelete :: O.Delete haskells -> Opaleye m haskells
   RunUpdate :: O.Update haskells -> Opaleye m haskells
 
 makeEffect ''Opaleye
 
+runSelect ::
+  (HasCallStack, Opaleye :> es, Default O.FromFields fields haskells) =>
+  O.Select fields ->
+  Eff es [haskells]
+runSelect = runSelectExplicit def
+
 runOpaleyeWithConnection ::
   (HasCallStack, Conn.WithConnection :> es, IOE :> es) =>
   Eff (Opaleye : es) a ->
   Eff es a
 runOpaleyeWithConnection = interpret $ \_ -> \case
-  RunSelect sel -> Conn.withConnection $ \conn -> liftIO $ O.runSelect conn sel
+  RunSelectExplicit ff sel -> Conn.withConnection $ \conn -> liftIO $ O.runSelectExplicit ff conn sel
   RunInsert sel -> Conn.withConnection $ \conn -> liftIO $ O.runInsert conn sel
   RunDelete sel -> Conn.withConnection $ \conn -> liftIO $ O.runDelete conn sel
   RunUpdate sel -> Conn.withConnection $ \conn -> liftIO $ O.runUpdate conn sel
@@ -43,7 +50,7 @@ runOpaleyeConnection ::
   Eff (Opaleye : es) a ->
   Eff es a
 runOpaleyeConnection conn = interpret $ \_ -> \case
-  RunSelect sel -> liftIO $ O.runSelect conn sel
+  RunSelectExplicit ff sel -> liftIO $ O.runSelectExplicit ff conn sel
   RunInsert sel -> liftIO $ O.runInsert conn sel
   RunDelete sel -> liftIO $ O.runDelete conn sel
   RunUpdate sel -> liftIO $ O.runUpdate conn sel
