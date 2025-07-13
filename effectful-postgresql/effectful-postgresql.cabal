@@ -14,6 +14,7 @@ homepage:           https://github.com/fpringle/effectful-postgresql
 build-type:         Simple
 category:           Database
 extra-doc-files:    README.md
+                    CHANGELOG.md
 
 tested-with:
     GHC == 8.8.4

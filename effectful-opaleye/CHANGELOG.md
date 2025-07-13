@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `effectful-postgresql` will be documented in this file.
+All notable changes to `effectful-opaleye` will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Haskell Package Versioning Policy](https://pvp.haskell.org).
@@ -14,4 +14,4 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 - Reasonably detailed READMEs.
 - CI that builds and tests the packages for each version of GHC in the `tested-with` field.
 
-[unreleased]: https://github.com/fpringle/servant-routes/compare/ca41f2e...HEAD
+[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/3f68fcd...HEAD
