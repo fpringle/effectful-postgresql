@@ -2,7 +2,7 @@
 
 module Effectful.PostgreSQL
   ( -- * Effect
-    WithConnection (..)
+    WithConnection
   , withConnection
 
     -- ** Interpreters
