@@ -44,7 +44,7 @@ runWithConnection conn = interpret $ \env -> \case
 
 {- | Run a t'WithConnection' effect using a 'PSQL.ConnectInfo'.
 
-'PSQL.withConnect' will handle opening and closing the 'Connection'.
+'PSQL.withConnect' will handle opening and closing the 'PSQL.Connection'.
 -}
 runWithConnectInfo ::
   (HasCallStack, IOE :> es) => PSQL.ConnectInfo -> Eff (WithConnection : es) a -> Eff es a
