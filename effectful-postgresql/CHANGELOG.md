@@ -7,6 +7,8 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+## [0.1.0.0] - 22.07.2025
+
 ### Added
 
 - First edition of the package, ready for feedback.
@@ -14,4 +16,5 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 - Reasonably detailed READMEs
 - CI that builds and tests the packages for each version of GHC in the `tested-with` field.
 
-[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/3f68fcd...HEAD
+[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.0...HEAD
+[0.1.0.0]: https://github.com/fpringle/effectful-postgresql/releases/tag/v0.1.0.0
