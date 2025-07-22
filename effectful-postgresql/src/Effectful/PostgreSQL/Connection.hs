@@ -43,6 +43,9 @@ runWithConnection conn = interpret $ \env -> \case
     localSeqUnlift env $ \unlift -> unlift $ f conn
 
 {- | Run a t'WithConnection' effect using a 'PSQL.ConnectInfo'.
+The 'PSQL.ConnectInfo' will be used to create a 'PSQL.Connection' which will be
+kept alive for the whole duration of the procedure, which might not be want you want
+for long-running processes. If so, see "Effectful.PostgreSQL.Connection.Pool".
 
 'PSQL.withConnect' will handle opening and closing the 'PSQL.Connection'.
 -}
