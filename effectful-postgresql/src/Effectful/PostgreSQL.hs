@@ -151,7 +151,7 @@ unliftWithConn ::
   Eff es a
 unliftWithConn f =
   withConnection $ \conn ->
-    withRunInIO $ \unlift ->
+    withSeqEffToIO $ \unlift ->
       liftIO $ f conn unlift
 {-# INLINE unliftWithConn #-}
 

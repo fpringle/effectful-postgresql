@@ -49,6 +49,6 @@ runWithConnection conn = interpret $ \env -> \case
 runWithConnectInfo ::
   (HasCallStack, IOE :> es) => PSQL.ConnectInfo -> Eff (WithConnection : es) a -> Eff es a
 runWithConnectInfo connInfo eff =
-  withRunInIO $ \unlift ->
+  withSeqEffToIO $ \unlift ->
     liftIO . PSQL.withConnect connInfo $ \conn ->
       unlift $ runWithConnection conn eff
