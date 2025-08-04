@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               effectful-postgresql
-version:            0.1.0.0
+version:            0.1.0.1
 synopsis:
   effectful support for mid-level PostgreSQL operations.
 description:
