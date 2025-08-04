@@ -35,7 +35,7 @@ common warnings
 common deps
   build-depends:
     , base >= 4 && < 5
-    , effectful-core >= 2.3 && < 2.6
+    , effectful-core >= 2.3 && < 2.7
     , effectful-th >= 1.0.0.1 && < 1.0.1
     , opaleye >= 0.9 && < 0.11
     , product-profunctors >= 0.9 && < 0.12
