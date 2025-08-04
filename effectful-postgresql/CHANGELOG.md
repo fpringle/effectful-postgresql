@@ -7,6 +7,12 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+## [0.1.0.1] - 04.08.2025
+
+### Changed
+
+- Increased upper bounds on `effectful-core` to support `2.6`
+
 ## [0.1.0.0] - 22.07.2025
 
 ### Added
@@ -16,5 +22,6 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 - Reasonably detailed READMEs
 - CI that builds and tests the packages for each version of GHC in the `tested-with` field.
 
-[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.0...HEAD
+[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.1...HEAD
+[0.1.0.1]: https://github.com/fpringle/effectful-postgresql/releases/tag/v0.1.0.1
 [0.1.0.0]: https://github.com/fpringle/effectful-postgresql/releases/tag/v0.1.0.0
