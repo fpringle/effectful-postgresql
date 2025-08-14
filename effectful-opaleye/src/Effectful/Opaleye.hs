@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Effectful.Opaleye
   ( -- * Effect
     Opaleye (..)
@@ -34,30 +32,10 @@ import Data.Profunctor.Product.Default
 import qualified Database.PostgreSQL.Simple as PSQL
 import Effectful
 import Effectful.Dispatch.Dynamic
+import Effectful.Opaleye.Effect
 import qualified Effectful.PostgreSQL.Connection as Conn
-import Effectful.TH
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Inferrable as O
-
--- | A dynamic effect to perform @opaleye@ operations.
-data Opaleye :: Effect where
-  -- | Lifted 'O.RunSelectExplicit'.
-  RunSelectExplicit :: O.FromFields fields haskells -> O.Select fields -> Opaleye m [haskells]
-  -- | Lifted 'O.RunSelectFoldExplicit'.
-  RunSelectFoldExplicit ::
-    O.FromFields fields haskells ->
-    O.Select fields ->
-    b ->
-    (b -> haskells -> m b) ->
-    Opaleye m b
-  -- | Lifted 'O.RunInsert'.
-  RunInsert :: O.Insert haskells -> Opaleye m haskells
-  -- | Lifted 'O.RunDelete'.
-  RunDelete :: O.Delete haskells -> Opaleye m haskells
-  -- | Lifted 'O.RunUpdate'.
-  RunUpdate :: O.Update haskells -> Opaleye m haskells
-
-makeEffect ''Opaleye
 
 -- | Lifted 'O.runSelect'.
 runSelect ::
