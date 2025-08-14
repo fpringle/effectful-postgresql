@@ -43,6 +43,7 @@ common deps
     , postgresql-simple >= 0.7 && < 0.8
     , text >= 2.0 && < 2.2
     , containers >= 0.6 && < 0.8
+    , pretty >= 1.1.1.0 && < 1.2
 
 common extensions
   default-extensions:

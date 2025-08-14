@@ -7,11 +7,21 @@ module Effectful.Opaleye.Count
     SQLOperationCounts (..)
   , opaleyeAddCounting
   , withCounts
+
+    -- * Pretty-printing
+  , printCounts
+  , printCountsBrief
+  , renderCounts
+  , renderCountsBrief
+  , prettyCounts
+  , prettyCountsBrief
   )
 where
 
+import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Maybe (catMaybes, mapMaybe)
 import qualified Data.Text as T
 import Database.PostgreSQL.Simple.Types (QualifiedIdentifier (..))
 import Effectful
@@ -23,6 +33,8 @@ import Numeric.Natural
 import qualified Opaleye as O
 import qualified Opaleye.Internal.PrimQuery as O (TableIdentifier (..))
 import qualified Opaleye.Internal.Table as O
+import qualified Text.PrettyPrint as P
+import qualified Text.PrettyPrint.HughesPJClass as P
 #if !MIN_VERSION_effectful_core(2,5,1)
 import Control.Monad (when)
 import Effectful.Dispatch.Static
@@ -168,3 +180,88 @@ updateTableName (O.Update table _ _ _) =
 deleteTableName :: O.Delete haskells -> QualifiedIdentifier
 deleteTableName (O.Delete table _ _) =
   tableIdentifierToQualifiedIdentifier . O.tableIdentifier $ table
+
+------------------------------------------------------------
+-- Pretty rendering and printing counts
+
+instance P.Pretty SQLOperationCounts where
+  pPrint = prettyCounts
+
+{- | Print an t'SQLOperationCounts' to stdout using 'prettyCounts'.
+For less verbose output, see 'printCountsBrief'.
+-}
+printCounts :: (MonadIO m) => SQLOperationCounts -> m ()
+printCounts = liftIO . putStrLn . renderCounts
+
+{- | Print an t'SQLOperationCounts' to stdout using 'prettyCountsBrief'.
+For more verbose output, see 'printCounts'.
+-}
+printCountsBrief :: (MonadIO m) => SQLOperationCounts -> m ()
+printCountsBrief = liftIO . putStrLn . renderCountsBrief
+
+{- | Render an t'SQLOperationCounts' using 'prettyCounts'.
+For less verbose output, see 'renderCountsBrief'.
+
+For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'style'.
+-}
+renderCounts :: SQLOperationCounts -> String
+renderCounts = P.render . prettyCounts
+
+{- | Render an t'SQLOperationCounts' using 'prettyCountsBrief'.
+For more verbose output, see 'renderCounts'.
+
+For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'style'.
+-}
+renderCountsBrief :: SQLOperationCounts -> String
+renderCountsBrief = P.render . prettyCountsBrief
+
+{- | Pretty-print an t'SQLOperationCounts' using "Text.PrettyPrint".
+For each 'Map', we'll print one line for each table. For less verbose output,
+see 'prettyCountsBrief'.
+
+This is also the implementation of 'P.pPrint' for t'SQLOperationCounts'.
+-}
+prettyCounts :: SQLOperationCounts -> P.Doc
+prettyCounts = prettyCountsWith $ \mp ->
+  let counts = Map.toList mp
+      renderPair (name, count) = prefix (renderTableName name) <$> renderNat count
+  in  fmap (P.vcat . NE.toList) . NE.nonEmpty $ mapMaybe renderPair counts
+
+{- | Pretty-print an t'SQLOperationCounts' using "Text.PrettyPrint".
+For each 'Map', we'll print just the sum of the counts. For more verbose output,
+see 'prettyCounts'.
+-}
+prettyCountsBrief :: SQLOperationCounts -> P.Doc
+prettyCountsBrief = prettyCountsWith $ \mp ->
+  let total = sum $ Map.elems mp
+  in  renderNat total
+
+prettyCountsWith :: (Map QualifiedIdentifier Natural -> Maybe P.Doc) -> SQLOperationCounts -> P.Doc
+prettyCountsWith renderMap (SQLOperationCounts selects inserts deletes updates) =
+  let parts =
+        catMaybes
+          [ prefix "SELECT" <$> renderNat selects
+          , prefix "INSERT" <$> renderMap inserts
+          , prefix "UPDATE" <$> renderMap updates
+          , prefix "DELETE" <$> renderMap deletes
+          ]
+  in  case parts of
+        [] -> "None"
+        _ -> P.vcat parts
+
+prefix :: P.Doc -> P.Doc -> P.Doc
+prefix t n = t P.<> ":" P.<+> n
+
+renderNat :: Natural -> Maybe P.Doc
+renderNat = \case
+  0 -> Nothing
+  n -> Just $ P.pPrint @Integer $ toInteger n
+
+renderTableName :: QualifiedIdentifier -> P.Doc
+renderTableName (QualifiedIdentifier mSchema table) =
+  case mSchema of
+    Nothing -> renderText table
+    Just schema -> renderText schema <> "." <> renderText table
+
+renderText :: T.Text -> P.Doc
+renderText = P.text . T.unpack

@@ -31,6 +31,7 @@ module Effectful.Opaleye
     -- * Counting SQL operations
   , SQLOperationCounts (..)
   , withCounts
+  , printCounts
   )
 where
 
