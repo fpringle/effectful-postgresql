@@ -1,5 +1,3 @@
-{-# LANGUAGE TemplateHaskell #-}
-
 module Effectful.Opaleye
   ( -- * Effect
     Opaleye (..)
@@ -26,7 +24,14 @@ module Effectful.Opaleye
 
     -- * Interpreters
   , runOpaleyeWithConnection
+  , runOpaleyeWithConnectionCounting
   , runOpaleyeConnection
+  , runOpaleyeConnectionCounting
+
+    -- * Counting SQL operations
+  , SQLOperationCounts (..)
+  , withCounts
+  , printCounts
   )
 where
 
@@ -34,30 +39,12 @@ import Data.Profunctor.Product.Default
 import qualified Database.PostgreSQL.Simple as PSQL
 import Effectful
 import Effectful.Dispatch.Dynamic
+import Effectful.Opaleye.Count
+import Effectful.Opaleye.Effect
 import qualified Effectful.PostgreSQL.Connection as Conn
-import Effectful.TH
+import Effectful.State.Static.Shared
 import qualified Opaleye as O
 import qualified Opaleye.Internal.Inferrable as O
-
--- | A dynamic effect to perform @opaleye@ operations.
-data Opaleye :: Effect where
-  -- | Lifted 'O.RunSelectExplicit'.
-  RunSelectExplicit :: O.FromFields fields haskells -> O.Select fields -> Opaleye m [haskells]
-  -- | Lifted 'O.RunSelectFoldExplicit'.
-  RunSelectFoldExplicit ::
-    O.FromFields fields haskells ->
-    O.Select fields ->
-    b ->
-    (b -> haskells -> m b) ->
-    Opaleye m b
-  -- | Lifted 'O.RunInsert'.
-  RunInsert :: O.Insert haskells -> Opaleye m haskells
-  -- | Lifted 'O.RunDelete'.
-  RunDelete :: O.Delete haskells -> Opaleye m haskells
-  -- | Lifted 'O.RunUpdate'.
-  RunUpdate :: O.Update haskells -> Opaleye m haskells
-
-makeEffect ''Opaleye
 
 -- | Lifted 'O.runSelect'.
 runSelect ::
@@ -115,3 +102,23 @@ runOpaleyeConnection conn = interpret $ \env -> \case
   RunInsert sel -> liftIO $ O.runInsert conn sel
   RunDelete sel -> liftIO $ O.runDelete conn sel
   RunUpdate sel -> liftIO $ O.runUpdate conn sel
+
+{- | Same as 'runOpaleyeWithConnection', but we track the number of SQL operations that
+we perform.
+-}
+runOpaleyeWithConnectionCounting ::
+  forall a es.
+  (HasCallStack, State SQLOperationCounts :> es, Conn.WithConnection :> es, IOE :> es) =>
+  Eff (Opaleye : es) a ->
+  Eff es a
+runOpaleyeWithConnectionCounting = runOpaleyeWithConnection . opaleyeAddCounting
+
+{- | Same as 'runOpaleyeConnection', but we track the number of SQL operations that
+we perform.
+-}
+runOpaleyeConnectionCounting ::
+  (HasCallStack, State SQLOperationCounts :> es, IOE :> es) =>
+  PSQL.Connection ->
+  Eff (Opaleye : es) a ->
+  Eff es a
+runOpaleyeConnectionCounting conn = runOpaleyeConnection conn . opaleyeAddCounting

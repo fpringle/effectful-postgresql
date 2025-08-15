@@ -41,6 +41,9 @@ common deps
     , product-profunctors >= 0.9 && < 0.12
     , effectful-postgresql >= 0.1 && < 0.2
     , postgresql-simple >= 0.7 && < 0.8
+    , text >= 2.0 && < 2.2
+    , containers >= 0.6 && < 0.8
+    , pretty >= 1.1.1.0 && < 1.2
 
 common extensions
   default-extensions:
@@ -60,6 +63,8 @@ library
     , extensions
   exposed-modules:
       Effectful.Opaleye
+      Effectful.Opaleye.Effect
+      Effectful.Opaleye.Count
   -- other-extensions:
   hs-source-dirs:   src
   default-language: Haskell2010
