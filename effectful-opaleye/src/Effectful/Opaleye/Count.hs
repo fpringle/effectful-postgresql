@@ -2,6 +2,98 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+{- | Thanks to our dynamic 'Opaleye' effect, we can write an alternative interpreter which,
+as well as performing SQL operations as before, will also keep a tally of the number of
+SQL operations (SELECTs, INSERTs etc) that have been performed. This is really useful for debugging.
+
+The intended use-case is a sort of benchmark that runs several Opaleye operations for different
+"sizes", counts the SQL operations, and prints the tallies to the console. This lets us detect if
+some datbase operations are ineffecient.
+
+For example, suppose our model has users with @UserId@s; those users an have multiple @Transaction@s, which
+are composed of multiple @SubTransaction@s etc.
+To insert a group of new users, we would need to insert the users, insert the transactions, and insert the subtransactions.
+Ideally, the number of @INSERT@s should not depend on the number of @User@s or the number or size of their @Transactions@.
+We would expect the number of SELECTs to remain basically constant (O(1)), while the execution time might grow linearly (O(u * t * s)).
+
+A very naive implementation might be:
+
+@
+insertUsersNaive :: ('Opaleye' :> es) => [User] -> Eff es ()
+insertUsersNaive users = for_ users $ \user -> do
+  insertUserFlat user
+  for (transactions user) $ \transaction -> do
+    insertTransactionFlat transaction
+    for (subTransactions transaction) $ \subTransaction -> do
+      insertSubTransactionFlat subTransaction
+@
+
+However, if we ran a "benchmark" that looked something like this:
+
+@
+u1, u5, u10, u50 :: [User]
+u1 = [User {transactions = [Transaction [SubTransaction]]}] -- one user, one transaction, one sub-transaction
+u5 = ...  -- five users, each with five transactions, each with 5 sub-transactions
+
+benchmark :: ('Opaleye' :> es, State SQLOperationCounts :> es, IOE :> es) => Eff es ()
+benchmark = for_ [(1, u1), (5, u5), (10, u10), (50, u50)] $ \(n, users) -> do
+  (counts, ()) <- withCounts $ insertUsersNaive users
+  liftIO . putStrLn $ "Counts at n=" <> show n <> ": " <> 'renderCountsBrief' counts
+
+main :: IO ()
+main = runEff . 'Conn.runWithConnectInfo' connInfo . evalState @SQLOperationCounts mempty . runOpaleyeWithConnectionCounting $ benchmark
+  where
+    connInfo = ...
+@
+
+We will probably see something like:
+
+@
+Counts at n=1: INSERT: 3
+Counts at n=5: INSERT: 155
+Counts at n=10: INSERT: 1110
+Counts at n=50: INSERT: 127550
+@
+
+This is obviously going to have a severe performance impact. Rearranging our implementatino of @insertUsers@:
+
+@
+insertUsersBetter :: ('Opaleye' :> es) => [User] -> Eff es ()
+insertUsersBetter users = do
+  let transactions_ = concatMap transactions users
+      subTransactions_ = concatMap subTransactions transactions_
+  insertUsersFlat users
+  insertTransactionsFlat transactions_
+  insertSubTransactionsFlat subTransactions_
+@
+
+As long as @insertTransactionsFlat@ etc are smart enough to only do one 'runInsert', then we should now get:
+
+@
+Counts at n=1: INSERT: 3
+Counts at n=5: INSERT: 3
+Counts at n=10: INSERT: 3
+Counts at n=50: INSERT: 3
+@
+
+Note that we used 'renderCountsBrief' for simplicity. If we wanted to debug in more detail, we could have used
+'renderCounts' instead:
+
+@
+Counts at n=1: INSERT: user: 1
+                       transaction: 1
+                       sub_transaction: 1
+Counts at n=5: INSERT: user: 5
+                       transaction: 25
+                       sub_transaction: 125
+Counts at n=10: INSERT: user: 10
+                        transaction: 100
+                        sub_transaction: 1000
+Counts at n=50: INSERT: user: 50
+                        transaction: 2500
+                        sub_transaction: 125000
+@
+-}
 module Effectful.Opaleye.Count
   ( -- * Counting SQL operations
     SQLOperationCounts (..)
@@ -202,7 +294,7 @@ printCountsBrief = liftIO . putStrLn . renderCountsBrief
 {- | Render an t'SQLOperationCounts' using 'prettyCounts'.
 For less verbose output, see 'renderCountsBrief'.
 
-For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'style'.
+For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'P.style'.
 -}
 renderCounts :: SQLOperationCounts -> String
 renderCounts = P.render . prettyCounts
@@ -210,7 +302,7 @@ renderCounts = P.render . prettyCounts
 {- | Render an t'SQLOperationCounts' using 'prettyCountsBrief'.
 For more verbose output, see 'renderCounts'.
 
-For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'style'.
+For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'P.style'.
 -}
 renderCountsBrief :: SQLOperationCounts -> String
 renderCountsBrief = P.render . prettyCountsBrief
