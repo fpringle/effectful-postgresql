@@ -7,6 +7,8 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+## [0.1.1.0] - 15.08.2025
+
 ### Added
 
 - Ability to keep a running tally of the SQL operations that are performed by
@@ -27,6 +29,7 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 - Reasonably detailed READMEs.
 - CI that builds and tests the packages for each version of GHC in the `tested-with` field.
 
-[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.1...HEAD
+[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/effectful-opaleye-0.1.1.0...HEAD
+[0.1.1.0]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.1...effectful-opaleye-0.1.1.0
 [0.1.0.1]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.0...v0.1.0.1
 [0.1.0.0]: https://github.com/fpringle/effectful-postgresql/releases/tag/v0.1.0.0
