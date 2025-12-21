@@ -7,6 +7,10 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+### Added
+
+- OpenTelemetry instrumentation support via `enable-otel` flag (transparent, no code changes required)
+
 ## [0.1.0.1] - 04.08.2025
 
 ### Changed

@@ -7,3 +7,12 @@ documentation: False
 
 package *
   documentation: False
+
+-- Use latest hs-opentelemetry from GitHub for GHC 9.12 support
+-- (Hackage version is outdated)
+source-repository-package
+  type: git
+  location: https://github.com/iand675/hs-opentelemetry.git
+  tag: 841a8e191fba3f2c76f6e6fa10d26b644856b7ee
+  subdir: api
+          instrumentation/postgresql-simple
