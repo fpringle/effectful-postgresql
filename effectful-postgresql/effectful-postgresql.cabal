@@ -36,11 +36,20 @@ flag enable-pool
   default: True
   manual: False
 
+flag enable-otel
+  description: Enable OpenTelemetry instrumentation support using
+               hs-opentelemetry-instrumentation-postgresql-simple.
+  default: False
+  manual: True
+
 common warnings
   ghc-options: -Wall -Wno-unused-do-bind -Wunused-packages
 
   if flag(enable-pool)
     cpp-options: -DPOOL
+
+  if flag(enable-otel)
+    cpp-options: -DOTEL
 
 common deps
   build-depends:
@@ -52,6 +61,10 @@ common deps
   if flag(enable-pool)
     build-depends:
       , unliftio-pool >= 0.4.1 && < 0.5
+
+  if flag(enable-otel)
+    build-depends:
+      , hs-opentelemetry-instrumentation-postgresql-simple >= 0.2 && < 0.4
 
 common extensions
   default-extensions:

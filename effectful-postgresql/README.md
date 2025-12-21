@@ -82,3 +82,14 @@ usingConnectionPool = do
   pool <- P.newPool poolCfg
   runEff . EP.runWithconnectionPool pool $ insertAndListCarefully
 ```
+
+## OpenTelemetry Instrumentation
+
+For applications using OpenTelemetry for distributed tracing, enable the `enable-otel` flag:
+
+```cabal
+dependencies:
+  - effectful-postgresql +enable-otel
+```
+
+All database operations will automatically create OpenTelemetry spans with database attributes. No code changes required - the same `Effectful.PostgreSQL` module transparently uses instrumented functions when the flag is enabled.

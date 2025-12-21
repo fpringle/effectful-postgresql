@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE PackageImports #-}
 
 module Effectful.PostgreSQL
   ( -- * Effect
@@ -51,7 +52,11 @@ module Effectful.PostgreSQL
 where
 
 import Data.Int (Int64)
+#if OTEL
+import qualified "hs-opentelemetry-instrumentation-postgresql-simple" OpenTelemetry.Instrumentation.PostgresqlSimple as PSQL
+#else
 import qualified Database.PostgreSQL.Simple as PSQL
+#endif
 import qualified Database.PostgreSQL.Simple.FromRow as PSQL
 import Effectful
 import Effectful.PostgreSQL.Connection as Conn
@@ -212,7 +217,12 @@ forEach ::
   Eff es ()
 forEach q row forR =
   unliftWithConn $ \conn unlift ->
+#if OTEL
+    -- Workaround for bug in hs-opentelemetry-instrumentation-postgresql-simple
+    PSQL.forEachWith PSQL.fromRow conn q row (unlift . forR)
+#else
     PSQL.forEach conn q row (unlift . forR)
+#endif
 
 -- | Lifted 'PSQL.forEach_'.
 forEach_ ::
