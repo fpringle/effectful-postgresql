@@ -1,5 +1,4 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {- | Thanks to our dynamic 'Opaleye' effect, we can write an alternative interpreter which,
@@ -96,37 +95,24 @@ Counts at n=50: INSERT: user: 50
 -}
 module Effectful.Opaleye.Count
   ( -- * Counting SQL operations
-    SQLOperationCounts (..)
-  , opaleyeAddCounting
+    opaleyeAddCounting
   , withCounts
-
-    -- * Pretty-printing
-  , printCounts
-  , printCountsBrief
-  , renderCounts
-  , renderCountsBrief
-  , prettyCounts
-  , prettyCountsBrief
+  , module PostgreSQL.Count
   )
 where
 
-import qualified Data.List.NonEmpty as NE
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Data.Maybe (catMaybes, mapMaybe)
 import qualified Data.Text as T
-import Database.PostgreSQL.Simple.Types (QualifiedIdentifier (..))
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Opaleye.Effect
 import Effectful.State.Static.Shared
-import GHC.Generics
 import Numeric.Natural
 import qualified Opaleye as O
 import qualified Opaleye.Internal.PrimQuery as O (TableIdentifier (..))
 import qualified Opaleye.Internal.Table as O
-import qualified Text.PrettyPrint as P
-import qualified Text.PrettyPrint.HughesPJClass as P
+import PostgreSQL.Count
 #if !MIN_VERSION_effectful_core(2,5,1)
 import Control.Monad (when)
 import Effectful.Dispatch.Static
@@ -137,38 +123,6 @@ import GHC.Stack
 
 ------------------------------------------------------------
 -- Tallying SQL operations
-
-{- | This tracks the number of SQL operations that have been performed in the
-'Opaleye' effect, along with which table it was performed on (where possible).
-
-@INSERT@, @DELETE@ and @UPDATE@ operations act on one table only, so we can tally the number
-of each that are performed on each table (indexed by a t'QualifiedIdentifier').
-@SELECT@ operations can act on multiple tables, so we just track the total number of selects.
-
-If required, t'SQLOperationCounts' can be constructed using 'Monoid' and combined using 'Semigroup'.
-
-We use non-negative 'Natural's as a tally since a negative number of operations makes no sense.
--}
-data SQLOperationCounts = SQLOperationCounts
-  { sqlSelects :: Natural
-  , sqlInserts :: Map QualifiedIdentifier Natural
-  , sqlDeletes :: Map QualifiedIdentifier Natural
-  , sqlUpdates :: Map QualifiedIdentifier Natural
-  }
-  deriving (Show, Eq, Generic)
-
-instance Semigroup SQLOperationCounts where
-  SQLOperationCounts s1 i1 d1 u1 <> SQLOperationCounts s2 i2 d2 u2 =
-    SQLOperationCounts
-      (s1 + s2)
-      (i1 `addNatMaps` i2)
-      (d1 `addNatMaps` d2)
-      (u1 `addNatMaps` u2)
-    where
-      addNatMaps = Map.unionWith (+)
-
-instance Monoid SQLOperationCounts where
-  mempty = SQLOperationCounts 0 mempty mempty mempty
 
 {- | Add counting of SQL operations to the interpreter of an 'Opaleye' effect.
 Note that the effect itself is not actually interpreted. We do this using 'passthrough',
@@ -199,7 +153,7 @@ opaleyeAddCounting = interpose $ \env op -> do
       RunDelete del -> incrementDelete $ deleteTableName del
       RunUpdate upd -> incrementUpdate $ updateTableName upd
 
-    incrementMap :: QualifiedIdentifier -> Map QualifiedIdentifier Natural -> Map QualifiedIdentifier Natural
+    incrementMap :: TableName -> Map TableName Natural -> Map TableName Natural
     incrementMap = Map.alter (Just . maybe 1 succ)
 
     incrementSelect = modify $ \counts ->
@@ -222,22 +176,6 @@ withCounts eff = do
   countsAfter <- get
   pure (countsAfter `subtractCounts` countsBefore, res)
 
-subtractNat :: Natural -> Natural -> Natural
-a `subtractNat` b = if a > b then a - b else 0
-
-subtractNatMaps :: (Ord k) => Map k Natural -> Map k Natural -> Map k Natural
-subtractNatMaps c1 c2 =
-  let f op count = Map.adjust (`subtractNat` count) op
-  in  Map.foldrWithKey f c1 c2
-
-subtractCounts :: SQLOperationCounts -> SQLOperationCounts -> SQLOperationCounts
-subtractCounts (SQLOperationCounts s1 i1 d1 u1) (SQLOperationCounts s2 i2 d2 u2) =
-  SQLOperationCounts
-    (s1 `subtractNat` s2)
-    (i1 `subtractNatMaps` i2)
-    (d1 `subtractNatMaps` d2)
-    (u1 `subtractNatMaps` u2)
-
 #if !MIN_VERSION_effectful_core(2,5,1)
 -- passthrough was only added in effectful-core-2.5.1, so if we don't have access to a version
 -- after that then we have to replicate it here
@@ -257,103 +195,18 @@ passthrough (LocalEnv les) op = unsafeEff $ \es -> do
 ------------------------------------------------------------
 -- Getting table identifiers from opaleye operations
 
-tableIdentifierToQualifiedIdentifier :: O.TableIdentifier -> QualifiedIdentifier
-tableIdentifierToQualifiedIdentifier (O.TableIdentifier mSchema table) =
-  QualifiedIdentifier (T.pack <$> mSchema) (T.pack table)
+tableIdentifierToTableName :: O.TableIdentifier -> TableName
+tableIdentifierToTableName (O.TableIdentifier mSchema table) =
+  TableName (T.pack <$> mSchema) (T.pack table)
 
-insertTableName :: O.Insert haskells -> QualifiedIdentifier
+insertTableName :: O.Insert haskells -> TableName
 insertTableName (O.Insert table _ _ _) =
-  tableIdentifierToQualifiedIdentifier . O.tableIdentifier $ table
+  tableIdentifierToTableName . O.tableIdentifier $ table
 
-updateTableName :: O.Update haskells -> QualifiedIdentifier
+updateTableName :: O.Update haskells -> TableName
 updateTableName (O.Update table _ _ _) =
-  tableIdentifierToQualifiedIdentifier . O.tableIdentifier $ table
+  tableIdentifierToTableName . O.tableIdentifier $ table
 
-deleteTableName :: O.Delete haskells -> QualifiedIdentifier
+deleteTableName :: O.Delete haskells -> TableName
 deleteTableName (O.Delete table _ _) =
-  tableIdentifierToQualifiedIdentifier . O.tableIdentifier $ table
-
-------------------------------------------------------------
--- Pretty rendering and printing counts
-
-instance P.Pretty SQLOperationCounts where
-  pPrint = prettyCounts
-
-{- | Print an t'SQLOperationCounts' to stdout using 'prettyCounts'.
-For less verbose output, see 'printCountsBrief'.
--}
-printCounts :: (MonadIO m) => SQLOperationCounts -> m ()
-printCounts = liftIO . putStrLn . renderCounts
-
-{- | Print an t'SQLOperationCounts' to stdout using 'prettyCountsBrief'.
-For more verbose output, see 'printCounts'.
--}
-printCountsBrief :: (MonadIO m) => SQLOperationCounts -> m ()
-printCountsBrief = liftIO . putStrLn . renderCountsBrief
-
-{- | Render an t'SQLOperationCounts' using 'prettyCounts'.
-For less verbose output, see 'renderCountsBrief'.
-
-For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'P.style'.
--}
-renderCounts :: SQLOperationCounts -> String
-renderCounts = P.render . prettyCounts
-
-{- | Render an t'SQLOperationCounts' using 'prettyCountsBrief'.
-For more verbose output, see 'renderCounts'.
-
-For more control over how the 'P.Doc' gets rendered, use 'P.renderStyle' with a custom 'P.style'.
--}
-renderCountsBrief :: SQLOperationCounts -> String
-renderCountsBrief = P.render . prettyCountsBrief
-
-{- | Pretty-print an t'SQLOperationCounts' using "Text.PrettyPrint".
-For each 'Map', we'll print one line for each table. For less verbose output,
-see 'prettyCountsBrief'.
-
-This is also the implementation of 'P.pPrint' for t'SQLOperationCounts'.
--}
-prettyCounts :: SQLOperationCounts -> P.Doc
-prettyCounts = prettyCountsWith $ \mp ->
-  let counts = Map.toList mp
-      renderPair (name, count) = prefix (renderTableName name) <$> renderNat count
-  in  fmap (P.vcat . NE.toList) . NE.nonEmpty $ mapMaybe renderPair counts
-
-{- | Pretty-print an t'SQLOperationCounts' using "Text.PrettyPrint".
-For each 'Map', we'll print just the sum of the counts. For more verbose output,
-see 'prettyCounts'.
--}
-prettyCountsBrief :: SQLOperationCounts -> P.Doc
-prettyCountsBrief = prettyCountsWith $ \mp ->
-  let total = sum $ Map.elems mp
-  in  renderNat total
-
-prettyCountsWith :: (Map QualifiedIdentifier Natural -> Maybe P.Doc) -> SQLOperationCounts -> P.Doc
-prettyCountsWith renderMap (SQLOperationCounts selects inserts deletes updates) =
-  let parts =
-        catMaybes
-          [ prefix "SELECT" <$> renderNat selects
-          , prefix "INSERT" <$> renderMap inserts
-          , prefix "UPDATE" <$> renderMap updates
-          , prefix "DELETE" <$> renderMap deletes
-          ]
-  in  case parts of
-        [] -> "None"
-        _ -> P.vcat parts
-
-prefix :: P.Doc -> P.Doc -> P.Doc
-prefix t n = t P.<> ":" P.<+> n
-
-renderNat :: Natural -> Maybe P.Doc
-renderNat = \case
-  0 -> Nothing
-  n -> Just $ P.pPrint @Integer $ toInteger n
-
-renderTableName :: QualifiedIdentifier -> P.Doc
-renderTableName (QualifiedIdentifier mSchema table) =
-  case mSchema of
-    Nothing -> renderText table
-    Just schema -> renderText schema <> "." <> renderText table
-
-renderText :: T.Text -> P.Doc
-renderText = P.text . T.unpack
+  tableIdentifierToTableName . O.tableIdentifier $ table

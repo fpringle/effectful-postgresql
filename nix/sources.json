@@ -11,6 +11,12 @@
         "url": "https://github.com/NixOS/nixpkgs/archive/b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef.tar.gz",
         "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
     },
+    "postgresql-operation-counting": {
+        "branch": "main",
+        "repo": "git@github.com:fpringle/postgresql-operation-counting",
+        "rev": "140e2699399f703b331bbbf243cab1a43f182524",
+        "type": "git"
+    },
     "pre-commit-hooks": {
         "branch": "master",
         "description": "Seamless integration of https://pre-commit.com git hooks with Nix.",
