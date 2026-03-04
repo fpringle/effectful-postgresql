@@ -72,6 +72,7 @@ library
     , extensions
   exposed-modules:
       Effectful.PostgreSQL
+      Effectful.PostgreSQL.Effect
       Effectful.PostgreSQL.Connection
   if flag(enable-pool)
     exposed-modules:
