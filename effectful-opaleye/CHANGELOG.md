@@ -7,6 +7,10 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+### Changed
+
+- Extract common operation counting code to [postgresql-operation-counting](https://github.com/fpringle/postgresql-operation-counting) in [#9](https://github.com/fpringle/effectful-postgresql/pull/9). Breaking change.
+
 ## [0.1.1.0] - 15.08.2025
 
 ### Added
