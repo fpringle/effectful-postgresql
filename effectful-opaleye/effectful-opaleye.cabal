@@ -44,7 +44,7 @@ common deps
     , text >= 2.0 && < 2.2
     , containers >= 0.6 && < 0.8
     , pretty >= 1.1.1.0 && < 1.2
-    , postgresql-operation-counting
+    , postgresql-operation-counting >= 0.1 && < 0.2
 
 common extensions
   default-extensions:
