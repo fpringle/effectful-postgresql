@@ -19,9 +19,7 @@ let
         let
           # When we pin specific versions of Haskell packages, they'll go here using callCabal2Nix.
           packageOverrides = {
-            /*
-            hello = doJailbreak (hfinal.callCabal2nix "hello" sources.hello { });
-            */
+            postgresql-operation-counting = hfinal.callCabal2nix "postgresql-operation-counting" "${sources.postgresql-operation-counting}" { };
           };
 
           makePackage = name: path:

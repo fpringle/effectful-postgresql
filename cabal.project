@@ -7,3 +7,5 @@ documentation: False
 
 package *
   documentation: False
+
+multi-repl: True
