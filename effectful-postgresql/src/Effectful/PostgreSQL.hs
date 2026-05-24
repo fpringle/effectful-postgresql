@@ -28,7 +28,10 @@ module Effectful.PostgreSQL
     -- ** Transaction handling
   , withTransaction
   , withTransactionLevel
+  , PSQL.IsolationLevel (..)
   , withTransactionMode
+  , PSQL.TransactionMode (..)
+  , PSQL.ReadWriteMode (..)
   , withTransactionModeRetry
   , withTransactionModeRetry'
   , withTransactionSerializable
