@@ -27,6 +27,12 @@ module Effectful.PostgreSQL
 
     -- ** Transaction handling
   , withTransaction
+  , withTransactionLevel
+  , withTransactionMode
+  , withTransactionModeRetry
+  , withTransactionModeRetry'
+  , withTransactionSerializable
+  , withTransactionSerialisable
   , withSavepoint
   , begin
   , commit
@@ -47,11 +53,18 @@ module Effectful.PostgreSQL
   , forEachWith
   , forEachWith_
   , returningWith
+
+  -- ** Error predicates
+  , PSQL.isSerializationError
+  , PSQL.isNoActiveTransactionError
+  , PSQL.isFailedTransactionError
   )
 where
 
+import qualified Control.Exception as E
 import Data.Int (Int64)
 import qualified Database.PostgreSQL.Simple as PSQL
+import qualified Database.PostgreSQL.Simple.Transaction as PSQL
 import qualified Database.PostgreSQL.Simple.FromRow as PSQL
 import Effectful
 import Effectful.PostgreSQL.Connection as Conn
@@ -123,6 +136,60 @@ withTransaction ::
 withTransaction f =
   unliftWithConn $ \conn unlift ->
     PSQL.withTransaction conn (unlift f)
+
+-- | Lifted 'PSQL.withTransactionLevel'.
+withTransactionLevel ::
+  (HasCallStack, WithConnection :> es, IOE :> es) =>
+  PSQL.IsolationLevel ->
+  Eff es a ->
+  Eff es a
+withTransactionLevel level f =
+  unliftWithConn $ \conn unlift ->
+    PSQL.withTransactionLevel level conn (unlift f)
+
+-- | Lifted 'PSQL.withTransactionMode'.
+withTransactionMode ::
+  (HasCallStack, WithConnection :> es, IOE :> es) =>
+  PSQL.TransactionMode ->
+  Eff es a ->
+  Eff es a
+withTransactionMode mode f =
+  unliftWithConn $ \conn unlift ->
+    PSQL.withTransactionMode mode conn (unlift f)
+
+-- | Lifted 'PSQL.withTransactionModeRetry'.
+withTransactionModeRetry ::
+  (HasCallStack, WithConnection :> es, IOE :> es) =>
+  PSQL.TransactionMode ->
+  (PSQL.SqlError -> Bool) ->
+  Eff es a ->
+  Eff es a
+withTransactionModeRetry mode shouldRetry f =
+  unliftWithConn $ \conn unlift ->
+    PSQL.withTransactionModeRetry mode shouldRetry conn (unlift f)
+
+-- | Lifted 'PSQL.withTransactionModeRetry''.
+withTransactionModeRetry' ::
+  (HasCallStack, WithConnection :> es, IOE :> es, E.Exception e) =>
+  PSQL.TransactionMode ->
+  (e -> Bool) ->
+  Eff es a ->
+  Eff es a
+withTransactionModeRetry' mode shouldRetry f =
+  unliftWithConn $ \conn unlift ->
+    PSQL.withTransactionModeRetry' mode shouldRetry conn (unlift f)
+
+-- | Lifted 'PSQL.withTransactionSerializable'.
+withTransactionSerializable ::
+  (HasCallStack, WithConnection :> es, IOE :> es) => Eff es a -> Eff es a
+withTransactionSerializable f =
+  unliftWithConn $ \conn unlift ->
+    PSQL.withTransactionSerializable conn (unlift f)
+
+-- | Anglicised 'withTransactionSerializable'.
+withTransactionSerialisable ::
+  (HasCallStack, WithConnection :> es, IOE :> es) => Eff es a -> Eff es a
+withTransactionSerialisable = withTransactionSerializable
 
 -- | Lifted 'PSQL.withSavepoint'.
 withSavepoint :: (HasCallStack, WithConnection :> es, IOE :> es) => Eff es a -> Eff es a
