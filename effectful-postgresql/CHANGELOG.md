@@ -7,6 +7,10 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+### Added
+
+- Support `withTransactionX` functions from `postgresql-simple` in [#13](https://github.com/fpringle/effectful-postgresql/pulls/13)
+
 ## [0.1.0.1] - 04.08.2025
 
 ### Changed
