@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Effectful.PostgreSQL.Effect
@@ -6,6 +8,9 @@ module Effectful.PostgreSQL.Effect
 
     -- ** Interpreters
   , runPostgreSQL
+#if OTEL
+  , runPostgreSQLOT
+#endif
 
     -- * Lifted versions of functions from Database.PostgreSQL.Simple
 
@@ -63,6 +68,9 @@ import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.PostgreSQL.Connection
 import Effectful.TH
+#if OTEL
+import qualified "hs-opentelemetry-instrumentation-postgresql-simple" OpenTelemetry.Instrumentation.PostgresqlSimple as OT
+#endif
 
 -- | Dynamic effect representing all the Postgres operations we want to perform.
 data PostgreSQL :: Effect where
@@ -293,3 +301,74 @@ runPostgreSQL = interpret $ \env -> \case
     localUnliftWithConn env $ \conn unlift ->
       PSQL.forEachWith_ parser conn q (unlift . forR)
   ReturningWith parser q rows -> withConnection $ \conn -> liftIO $ PSQL.returningWith parser conn q rows
+
+#if OTEL
+{- | An interpreter for the 'PostgreSQL' effect that runs database operations using OpenTelemetry instrumentation.
+
+Basically the same as 'runPostgreSQL' except it uses the functions from
+[OpenTelemetry.Instrumentation.PostgresqlSimple](https://hackage-content.haskell.org/package/hs-opentelemetry-instrumentation-postgresql-simple/docs/OpenTelemetry-Instrumentation-PostgresqlSimple.html).
+
+Note that the @enable-opentel@ cabal flag must be set to enable this functionality.
+-}
+runPostgreSQLOT :: forall es a. (HasCallStack, WithConnection :> es, IOE :> es) => Eff (PostgreSQL : es) a -> Eff es a
+runPostgreSQLOT = interpret $ \env -> \case
+  Query q row ->
+    withConnection $ \conn -> OT.query conn q row
+  QueryWith parser q row ->
+    withConnection $ \conn -> OT.queryWith parser conn q row
+  Query_ row ->
+    withConnection $ \conn -> OT.query_ conn row
+  QueryWith_ parser row ->
+    withConnection $ \conn -> OT.queryWith_ parser conn row
+  Execute q row -> withConnection $ \conn -> OT.execute conn q row
+  Execute_ q -> withConnection $ \conn -> OT.execute_ conn q
+  ExecuteMany q row -> withConnection $ \conn -> OT.executeMany conn q row
+  WithTransaction f -> localUnliftWithConn env $ \conn unlift -> OT.withTransaction conn (unlift f)
+  WithTransactionLevel level f -> localUnliftWithConn env $ \conn unlift -> PSQL.withTransactionLevel level conn (unlift f)
+  WithTransactionMode mode f -> localUnliftWithConn env $ \conn unlift -> PSQL.withTransactionMode mode conn (unlift f)
+  WithTransactionModeRetry mode shouldRetry f -> localUnliftWithConn env $ \conn unlift -> PSQL.withTransactionModeRetry mode shouldRetry conn (unlift f)
+  WithTransactionModeRetry' mode shouldRetry f -> localUnliftWithConn env $ \conn unlift -> PSQL.withTransactionModeRetry' mode shouldRetry conn (unlift f)
+  WithTransactionSerializable f -> localUnliftWithConn env $ \conn unlift -> PSQL.withTransactionSerializable conn (unlift f)
+  WithSavepoint f -> localUnliftWithConn env $ \conn unlift -> OT.withSavepoint conn (unlift f)
+  Begin -> withConnection $ liftIO . OT.begin
+  Commit -> withConnection $ liftIO . OT.commit
+  Rollback -> withConnection $ liftIO . OT.rollback
+  Fold q params a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.fold conn q params a (unlift ... f)
+  Fold_ q a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.fold_ conn q a (unlift ... f)
+  FoldWithOptions opts q params a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.foldWithOptions opts conn q params a (unlift ... f)
+  FoldWithOptions_ opts q a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.foldWithOptions_ opts conn q a (unlift ... f)
+  ForEach q row forR ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.forEachWith PSQL.fromRow conn q row (unlift . forR)
+  ForEach_ q forR ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.forEach_ conn q (unlift . forR)
+  Returning q rows -> withConnection $ \conn -> OT.returning conn q rows
+  FoldWith parser q params a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.foldWith parser conn q params a (unlift ... f)
+  FoldWithOptionsAndParser opts parser q params a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.foldWithOptionsAndParser opts parser conn q params a (unlift ... f)
+  FoldWith_ parser q a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.foldWith_ parser conn q a (unlift ... f)
+  FoldWithOptionsAndParser_ opts parser q a f ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.foldWithOptionsAndParser_ opts parser conn q a (unlift ... f)
+  ForEachWith parser q row forR ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.forEachWith parser conn q row (unlift . forR)
+  ForEachWith_ parser q forR ->
+    localUnliftWithConn env $ \conn unlift ->
+      OT.forEachWith_ parser conn q (unlift . forR)
+  ReturningWith parser q rows -> withConnection $ \conn -> OT.returningWith parser conn q rows
+#endif
