@@ -7,6 +7,9 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+### Changed
+- Dynamic `PostgreSQL` effect in [#15](https://github.com/fpringle/effectful-postgresql/pull/15)
+
 ### Added
 
 - Support `withTransactionX` functions from `postgresql-simple` in [#13](https://github.com/fpringle/effectful-postgresql/pulls/13)
