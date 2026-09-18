@@ -13,6 +13,7 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 ### Added
 
 - Support `withTransactionX` functions from `postgresql-simple` in [#13](https://github.com/fpringle/effectful-postgresql/pulls/13)
+- Support OpenTelemetry instrumentation in [#16](https://github.com/fpringle/effectful-postgresql/pull/16)
 
 ## [0.1.0.1] - 04.08.2025
 
