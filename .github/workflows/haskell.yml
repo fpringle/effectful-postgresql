@@ -4,7 +4,6 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
     types: [ opened, synchronize, reopened, ready_for_review ]
 
 permissions:
@@ -114,6 +113,8 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+      - name: Configure cabal flags
+        run: cabal configure -fenable-otel -fenable-pool
       - name: Install dependencies
         run: |
           cabal update
