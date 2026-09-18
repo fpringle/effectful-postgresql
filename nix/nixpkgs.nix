@@ -20,6 +20,7 @@ let
           # When we pin specific versions of Haskell packages, they'll go here using callCabal2Nix.
           packageOverrides = {
             postgresql-operation-counting = hfinal.callCabal2nix "postgresql-operation-counting" "${sources.postgresql-operation-counting}" { };
+            effectful-th = hprev.effectful-th_1_0_0_3;
           };
 
           makePackage = name: path:
