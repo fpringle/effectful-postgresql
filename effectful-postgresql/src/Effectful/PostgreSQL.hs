@@ -15,6 +15,10 @@ module Effectful.PostgreSQL
 
   , runPostgreSQL
 
+#if OTEL
+  , runPostgreSQLOT
+#endif
+
     -- * Lifted versions of functions from Database.PostgreSQL.Simple
 
     -- ** Queries that return results

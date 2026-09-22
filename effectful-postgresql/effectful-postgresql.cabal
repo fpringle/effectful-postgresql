@@ -17,9 +17,7 @@ extra-doc-files:    README.md
                     CHANGELOG.md
 
 tested-with:
-    GHC == 8.8.4
-  , GHC == 8.10.7
-  , GHC == 9.0.2
+    GHC == 9.0.2
   , GHC == 9.2.4
   , GHC == 9.2.8
   , GHC == 9.4.2
@@ -36,11 +34,20 @@ flag enable-pool
   default: True
   manual: False
 
+flag enable-otel
+  description: Enable OpenTelemetry instrumentation support using
+               hs-opentelemetry-instrumentation-postgresql-simple.
+  default: False
+  manual: True
+
 common warnings
   ghc-options: -Wall -Wno-unused-do-bind -Wunused-packages
 
   if flag(enable-pool)
     cpp-options: -DPOOL
+
+  if flag(enable-otel)
+    cpp-options: -DOTEL
 
 common deps
   build-depends:
@@ -52,6 +59,10 @@ common deps
   if flag(enable-pool)
     build-depends:
       , unliftio-pool >= 0.4.1 && < 0.5
+
+  if flag(enable-otel)
+    build-depends:
+      , hs-opentelemetry-instrumentation-postgresql-simple >= 1.0 && < 1.1
 
 common extensions
   default-extensions:
