@@ -37,7 +37,7 @@ common deps
     , effectful-th >= 1.0.0.1 && < 1.0.1
     , opaleye >= 0.9 && < 0.11
     , product-profunctors >= 0.9 && < 0.12
-    , effectful-postgresql >= 0.1 && < 0.2
+    , effectful-postgresql >= 0.1 && < 0.3
     , postgresql-simple >= 0.7 && < 0.8
     , text >= 2.0 && < 2.2
     , containers >= 0.6 && < 0.8
