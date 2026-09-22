@@ -7,6 +7,8 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 
 ## [Unreleased]
 
+## [0.2.0.0] - 22.09.2026
+
 ### Changed
 - Dynamic `PostgreSQL` effect in [#15](https://github.com/fpringle/effectful-postgresql/pull/15)
 
@@ -30,6 +32,7 @@ and this project adheres to [Haskell Package Versioning Policy](https://pvp.hask
 - Reasonably detailed READMEs
 - CI that builds and tests the packages for each version of GHC in the `tested-with` field.
 
-[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.1...HEAD
+[unreleased]: https://github.com/fpringle/effectful-postgresql/compare/effectful-postgresql-0.2.0.0...HEAD
+[0.2.0.0]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.1...effectful-postgresql-0.2.0.0
 [0.1.0.1]: https://github.com/fpringle/effectful-postgresql/compare/v0.1.0.0...v0.1.0.1
 [0.1.0.0]: https://github.com/fpringle/effectful-postgresql/releases/tag/v0.1.0.0
